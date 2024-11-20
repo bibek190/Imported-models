@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "lil-gui";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 /**
  * Base
@@ -19,12 +20,26 @@ const scene = new THREE.Scene();
 /*
 Models
 */
+const dracoLoader = new DRACOLoader();
+// seperating file (walker)
+dracoLoader.setDecoderPath("/draco/");
 
 const gltfLoader = new GLTFLoader();
-gltfLoader.load("./models/FlightHelmet/glTF/FlightHelmet.gltf", (gltf) => {
-  for (const child of gltf.scene.children) {
-    scene.add(child);
-  }
+gltfLoader.setDRACOLoader(dracoLoader);
+
+let mixer = null;
+
+gltfLoader.load("./models/Fox/glTF/Fox.gltf", (gltf) => {
+  //  animation mixer
+
+  mixer = new THREE.AnimationMixer(gltf.scene);
+
+  const action = mixer.clipAction(gltf.animations[1]);
+  action.play();
+
+  console.log(gltf);
+  gltf.scene.scale.set(0.025, 0.025, 0.025);
+  scene.add(gltf.scene);
 });
 
 /**
@@ -123,6 +138,9 @@ const tick = () => {
 
   // Update controls
   controls.update();
+
+  //
+  if (mixer !== null) mixer.update(deltaTime);
 
   // Render
   renderer.render(scene, camera);
